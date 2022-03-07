@@ -1,5 +1,7 @@
 #Django
 from django.contrib.auth import password_validation
+from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
 
 
 #Django Rest Framework
@@ -11,9 +13,14 @@ from users.models import Client
 
 class ClientModelSerializer(serializers.ModelSerializer):
     """ User model serializer """
+    #import ipdb;ipdb.set_trace()
     class Meta:
         model = Client
-        fields = '__all__'
+        fields = (
+            'first_name',
+            'last_name',
+            'email',
+        )
 
 class ClientSignupSerializer(serializers.Serializer):
     """ User sign up serializer 
@@ -29,7 +36,7 @@ class ClientSignupSerializer(serializers.Serializer):
     last_name = serializers.CharField(min_length = 4, max_length = 20)
 
     #Document
-    document = serializers.IntegerField(min_length = 10)
+    document = serializers.IntegerField()
 
     #Password
     password = serializers.CharField(min_length = 8, max_length=64)
@@ -56,3 +63,14 @@ class ClientSignupSerializer(serializers.Serializer):
         verification_token = self.gen_verification_token(client)
         subject = 'WElcome @{}! Verify your account to start using Comparte Ride'.format(client.first_name)
         from_email = "Company email <noreply@company.com>"
+        text_content = render_to_string(
+            'emails/users/account_verification.html',
+            {'token': verification_token, 'client': client}
+        )
+        msg = EmailMultiAlternatives(subject, text_content, from_email, [client.email])
+        msg.attach_alternative(text_content, "text/html")
+        msg.send()
+    
+    def gen_verification_token(self, client):
+        """ Create JWT token that the user can use to verify its account. """
+        return "1234"
