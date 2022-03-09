@@ -143,8 +143,8 @@ REST_FRAMEWORK = {
 
 #Email
 
-# EMAIL_BACKEND = env('DJANGO_EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
-# #Lo siguiente hace el código enviado se imprima en consola y no esperar que le llegue al usuario
-# EMAIL_BACKEND = env('DJANGO_EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
-# EMAIL_HOST = 'localhost'
-# EMAIL_PORT = 1025
+EMAIL_BACKEND = env('DJANGO_EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+#Lo siguiente hace el código enviado se imprima en consola y no esperar que le llegue al usuario
+EMAIL_BACKEND = env('DJANGO_EMAIL_BACKEND', default='django.core.mail.backends.console.EmailBackend')
+EMAIL_HOST = 'localhost'
+EMAIL_PORT = 1025

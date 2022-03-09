@@ -1,15 +1,22 @@
 #Django
-from django.contrib.auth import password_validation
+from django.contrib.auth import password_validation, authenticate
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
+from django.utils import timezone
+from django.conf import settings
 
 
 #Django Rest Framework
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
+from rest_framework.authtoken.models import Token
 
 #Models
 from users.models import Client
+
+#Utilities
+import jwt
+from datetime import timedelta
 
 class ClientModelSerializer(serializers.ModelSerializer):
     """ User model serializer """
@@ -54,7 +61,7 @@ class ClientSignupSerializer(serializers.Serializer):
     def create(self,data):
         """ Handle user and profule creation """
         data.pop("password_confirmation")
-        client = Client.objects.create_user(**data, is_verified = False, is_active = False)
+        client = Client.objects.create(**data, is_verified = False, is_active = False)
         self.send_confirmation_email(client)
         return(client)
 
@@ -73,4 +80,33 @@ class ClientSignupSerializer(serializers.Serializer):
     
     def gen_verification_token(self, client):
         """ Create JWT token that the user can use to verify its account. """
-        return "1234"
+        exp_date = timezone.now() + timedelta(days=3)
+        payload = {
+            'client':client.first_name,
+            'exp':int(exp_date.timestamp()),
+            'type':'email_confirmation'
+        }
+        token = jwt.encode(payload, settings.SECRET_KEY, algorithm = 'HS256')
+        return token.decode()
+        
+class ClientLoginSerializer(serializers.Serializer):
+    """ Client login serializer.
+    Handle the login request data. """
+
+    email = serializers.EmailField()
+    password = serializers.CharField(min_length = 8, max_length = 64)
+
+    def validate(self, data):
+        """ Check credentials. """
+        client = authenticate(username = data['email'], password = data['password'])
+        if not client:
+            raise serializers.ValidationError('Invalid credentials')
+        if not client.is_verified:
+            raise serializers.ValidationError("Account is not active yet :(")
+        self.context['client'] = client
+        return data
+    
+    def create(self, date):
+        """ Account verification serializer """
+        token, created = Token.objects.get_or_create(user = self.context['client'])
+        return self.context['client'], token.key

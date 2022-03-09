@@ -11,7 +11,7 @@ class CustomClientManager(BaseUserManager):
         """ Create a new regular client """
         email = self.normalize_email(email=email)
         client = self.model(email=email, first_name=first_name, last_name=last_name, document=document,**other_fields)
-        client.set_password(password)
+        client.make_password(password)
         client.save()
         return client
     
@@ -49,7 +49,7 @@ class Client(AbstractBaseUser, PermissionsMixin):
         help_text="Set to true when the user have verified its email address. "
     )
 
-    EMAIL_FIELD = 'email'
+    #EMAIL_FIELD = 'email'
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name', 'document']
     

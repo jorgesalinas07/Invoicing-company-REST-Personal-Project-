@@ -5,7 +5,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 
 #Serializers
-from users.serializers import ClientModelSerializer, ClientSignupSerializer
+from users.serializers import ClientModelSerializer, ClientSignupSerializer, ClientLoginSerializer
 
 #Models
 from users.models import Client
@@ -26,4 +26,16 @@ class ClientViewSet(mixins.RetrieveModelMixin,
         serializer.is_valid(raise_exception=True)
         client = serializer.save()
         data = ClientModelSerializer(client).data
+        return Response(data, status = status.HTTP_201_CREATED)
+
+    @action(detail=False, methods = ['post'])
+    def login(self, request):
+        """ Client login. """
+        serializer = ClientLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception = True)
+        user, token = serializer.save()
+        data = {
+            'user': ClientLoginSerializer(user).data,
+            'access_token' : token,
+        }
         return Response(data, status = status.HTTP_201_CREATED)
