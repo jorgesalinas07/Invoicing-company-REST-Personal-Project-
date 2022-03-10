@@ -14,9 +14,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from users.models import Client
 
 
-class ClientViewSet(mixins.RetrieveModelMixin,
-                viewsets.GenericViewSet,
-                mixins.UpdateModelMixin):
+class ClientViewSet(viewsets.ModelViewSet):
 
     queryset = Client.objects.all()
     serializer_class = ClientModelSerializer
