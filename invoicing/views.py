@@ -24,14 +24,15 @@ class InvoiceViewSet(viewsets.ModelViewSet):
 
     queryset = Bill.objects.all()
     serializer_class = InvoiceModelSerializer
-    lookup_field = "username"
+    lookup_field = "code"
 
     def get_permissions(self):
+        ##Definir que todo se necesite que sea authenticado
         """ Assign permissions based on action. """
-        if self.action in ['create_bill', 'list']:
+        if self.action in ['create_bill', 'list', 'update_bill']:
             permissions = [IsAuthenticated]
         else:
-            permissions = [AllowAny]
+            permissions = [IsAuthenticated]
         return [p() for p in permissions]
     
     @action(detail=False, methods=['post'])
@@ -39,9 +40,13 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         """ Create bill for a client """
         #client = self.get_object()
         #import ipdb;ipdb.set_trace()
-        serializer = CreateBillSerializer(
+        # serializer = CreateBillSerializer(
+        #     data = request.data,
+        #     context={'request': request.auth.key}
+        # )
+        serializer = InvoiceModelSerializer(
             data = request.data,
-            context={'request': request.auth.key}
+            #context={'request': request.auth.key}
         )
         serializer.is_valid(raise_exception=True)
         bill = serializer.save()
@@ -55,3 +60,19 @@ class InvoiceViewSet(viewsets.ModelViewSet):
             client_id = Client.objects.get(auth_token=self.request.auth.key)
             return queryset.filter(client_id = client_id )
         return queryset
+
+    @action(detail=True, methods=['put', 'patch'])
+    def update_bill(self, request, *args, **kwargs):
+        """Update client data."""
+        code = self.get_object()
+        partial = request.method == 'PATCH' 
+        serializer = InvoiceModelSerializer(
+            #profile,
+            code,
+            data=request.data,
+            partial=partial
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        data = InvoiceModelSerializer(code).data
+        return Response(data)

@@ -23,14 +23,12 @@ class ClientModelSerializer(serializers.ModelSerializer):
     #import ipdb;ipdb.set_trace()
     class Meta:
         model = Client
-        #fields = '__all__'
         fields = (
             'username',
             'first_name',
             'last_name',
             'email',
             'document',
-            #'password',
             'date_joined',
         )
 
