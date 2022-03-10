@@ -23,19 +23,29 @@ class ClientModelSerializer(serializers.ModelSerializer):
     #import ipdb;ipdb.set_trace()
     class Meta:
         model = Client
+        #fields = '__all__'
         fields = (
+            'username',
             'first_name',
             'last_name',
             'email',
+            'document',
+            #'password',
+            'date_joined',
         )
 
 class ClientSignupSerializer(serializers.Serializer):
     """ User sign up serializer 
     Handle sign up data validation and user/profile creation.
     """
+
     #Principal field
     email = serializers.EmailField(
         validators = [UniqueValidator(queryset=Client.objects.all())]
+    )
+    username = serializers.CharField(min_length =4,
+                                        max_length=20,
+                                            validators = [UniqueValidator(queryset = Client.objects.all())]
     )
 
     #Name
@@ -61,7 +71,7 @@ class ClientSignupSerializer(serializers.Serializer):
     def create(self,data):
         """ Handle user and profule creation """
         data.pop("password_confirmation")
-        client = Client.objects.create(**data, is_verified = False, is_active = False)
+        client = Client.objects.create_user(**data, is_verified = False, is_active = True)
         self.send_confirmation_email(client)
         return(client)
 
@@ -82,7 +92,7 @@ class ClientSignupSerializer(serializers.Serializer):
         """ Create JWT token that the user can use to verify its account. """
         exp_date = timezone.now() + timedelta(days=3)
         payload = {
-            'client':client.first_name,
+            'client':client.email,
             'exp':int(exp_date.timestamp()),
             'type':'email_confirmation'
         }
@@ -107,6 +117,32 @@ class ClientLoginSerializer(serializers.Serializer):
         return data
     
     def create(self, date):
-        """ Account verification serializer """
+        """ Generate or retrive new token """
         token, created = Token.objects.get_or_create(user = self.context['client'])
         return self.context['client'], token.key
+
+class ClientVerificationSerializer(serializers.Serializer):
+    """ Account Verification serializer """
+    token = serializers.CharField()
+
+    def validate_token(self, data):
+        """ Verify token is valid """
+        try:
+            payload = jwt.decode(data,settings.SECRET_KEY, algorithms=['HS256'])
+        except jwt.ExpiredSignatureError:
+            raise serializers.ValidationError('Verification link has expired.')
+        except jwt.PyJWTError:
+            raise serializers.ValidationError('Invalid token') 
+        if payload['type'] != 'email_confirmation':
+            raise serializers.ValidationError('Invalid token')
+
+        self.context['payload'] = payload
+        return data
+
+    def save(self):
+        """ Update user's verified status. """
+        payload = self.context['payload']
+        client = Client.objects.get(email = payload['client'])
+        client.is_verified = True
+        client.save()
+
