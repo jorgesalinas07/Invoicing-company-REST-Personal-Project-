@@ -14,5 +14,14 @@ router.register(r'users', views.ClientViewSet, basename='users')
 
 urlpatterns = [
     path('', include(router.urls)),
-#    path('users/', views.hello)
+    path(
+        route='download/',
+        view = views.downloadfile,
+        name = 'download'
+    ),
+    path(
+        route='import/',
+        view = views.importfile,
+        name = 'import'
+    )
 ]

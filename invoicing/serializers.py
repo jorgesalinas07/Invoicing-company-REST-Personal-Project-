@@ -5,6 +5,8 @@ from dataclasses import field
 from itertools import product
 from rest_framework import serializers
 
+#Exceptions
+from django.db import IntegrityError
 
 #Models
 from invoicing.models import Bill, Product
@@ -54,11 +56,15 @@ class CreateBillSerializer(BillFieldsRequired, serializers.Serializer):
     def create(self,data):
         """ Handle Bill creation """
         client = Client.objects.get(auth_token=self.context['token'])
-        new_bill = client.bill_set.create(
-                            company_name = data['company_name'], 
-                            nit = data['nit'],
-                            code = data['code'],
-                            )
+        try: 
+            new_bill = client.bill_set.create(
+                                company_name = data['company_name'], 
+                                nit = data['nit'],
+                                code = data['code'],
+                                )
+        except IntegrityError:
+            raise serializers.ValidationError("Code already been used")
+
         names = []
         descriptions = []
         for index in data['product_data']:
@@ -94,7 +100,10 @@ class UpdateBillSerializer(BillFieldsRequired, serializers.Serializer):
         bill = self.context['invoice']
         bill.company_name = data['company_name']
         bill.nit = data['nit']
-        bill.code = data['code']
+        try:
+            bill.code = data['code']
+        except IntegrityError:
+            raise serializers.ValidationError("Code already been used")
         names = []
         descriptions = []
         for index in data['product_data']:
@@ -124,7 +133,10 @@ class UpdateBillSerializer(BillFieldsRequired, serializers.Serializer):
         except KeyError:
             pass
         try:
-            bill.code = data['code']
+            try:
+                bill.code = data['code']
+            except IntegrityError:
+                raise serializers.ValidationError("Code already been used")
         except KeyError:
             pass
         try:
