@@ -1,7 +1,7 @@
 # Invoicing-company-REST-Personal-Project-
-This respository is a personal project of an invoicing company using Django Rest Framework
+This respository is a personal project of an invoicing company using Django Rest Framework and Postman.
 
-Now we have an explanation of the deply of this proyect:
+Now we have an explanation of the deploy of this proyect:
 
 1. Start and use the clients CRUD using the following paths:
     - Create a client using the url (host/users/signup/) with POST method. Here you with be asked for an email, username, password, password confirmation, first name, last name and document. This process creates a Jason web token (JWK) and sends it to the client email previusly provided.
