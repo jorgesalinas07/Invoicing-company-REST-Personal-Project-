@@ -18,7 +18,8 @@ from invoicing.serializers import InvoiceModelSerializer, CreateBillSerializer, 
 
 
 class InvoiceViewSet(mixins.ListModelMixin,
-                   viewsets.GenericViewSet):
+                   viewsets.GenericViewSet,
+                    mixins.DestroyModelMixin):
     # mixins.RetrieveModelMixin,
     #             viewsets.GenericViewSet,
     #             mixins.UpdateModelMixin):
@@ -30,7 +31,7 @@ class InvoiceViewSet(mixins.ListModelMixin,
     def get_permissions(self):
         ##Definir que todo se necesite que sea authenticado
         """ Assign permissions based on action. """
-        if self.action in ['create_bill', 'list', 'update_bill']:
+        if self.action in ['create_bill', 'list', 'edit']:
             permissions = [IsAuthenticated]
         else:
             permissions = [IsAuthenticated]
@@ -77,10 +78,4 @@ class InvoiceViewSet(mixins.ListModelMixin,
         data = InvoiceModelSerializer(invoice).data
         return Response(data)
 
-    def get_serializer_class(self):
-        serializer_class = InvoiceModelSerializer
-        if self.action == 'update':
-            serializer_class = UpdateBillSerializer
-            return serializer_class
-        return serializer_class
     

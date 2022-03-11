@@ -51,7 +51,6 @@ class CreateBillSerializer(BillFieldsRequired, serializers.Serializer):
                     raise serializers.ValidationError("Expecting name and description in the product data")
         return data
 
-
     def create(self,data):
         """ Handle Bill creation """
         client = Client.objects.get(auth_token=self.context['token'])
@@ -73,6 +72,7 @@ class CreateBillSerializer(BillFieldsRequired, serializers.Serializer):
             new_product = Product.objects.create(name = name, description = description)
             new_bill.product.add(new_product)
         return new_bill
+    
     
 class UpdateBillSerializer(BillFieldsRequired, serializers.Serializer):
     """ Update Bill serializer """

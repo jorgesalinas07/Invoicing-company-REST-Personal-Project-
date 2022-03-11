@@ -25,7 +25,7 @@ class ClientViewSet(viewsets.ModelViewSet):
         #Para las acciones ['signup', 'login', 'verify'] se tienen todos los permisos
         if self.action in ['signup', 'login', 'verify']:
             permissions = [AllowAny]
-        elif self.action in ['retrieve', 'update', 'partial_update']:
+        elif self.action in ['retrieve', 'update', 'partial_update', 'destroy']:
             permissions = [IsAuthenticated]
         else:
         #Para cualquier otro caso, es autenticado

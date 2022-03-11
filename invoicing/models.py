@@ -24,7 +24,7 @@ class Bill(models.Model):
     client_id = models.ForeignKey(Client, on_delete=models.CASCADE,null=True, blank=True)
     company_name = models.CharField(max_length=150, blank=True)
     nit = models.PositiveIntegerField(null=False, max_length=10)
-    code = models.PositiveIntegerField(null=True)
+    code = models.PositiveIntegerField(null=True, unique=True)
     product = models.ManyToManyField(Product)
     def __str__(self):
 
