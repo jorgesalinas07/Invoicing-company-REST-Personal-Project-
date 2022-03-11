@@ -1,8 +1,6 @@
 """ Bill serializers """
 
-#Django Res Framework
-from dataclasses import field
-from itertools import product
+#Django Rest Framework
 from rest_framework import serializers
 
 #Exceptions
@@ -14,25 +12,31 @@ from users.models import Client
 
 
 class BillFieldsRequired(serializers.Serializer):
+    """ Serializers fields required in the update and create bill """
 
-    company_name = serializers.CharField(min_length =3,max_length=20)
-    nit = serializers.IntegerField()
-    code = serializers.IntegerField()
-    product_data = serializers.JSONField()
+    company_name =  serializers.CharField(min_length =3,max_length=20)
+    nit =           serializers.IntegerField()
+    code =          serializers.IntegerField()
+    product_data =  serializers.JSONField()
 
 
 class ProductSerializer(serializers.ModelSerializer):
     """ Serializer for the products """
+
     class Meta:
-        model = Product
-        fields = ('name', 'description')
+        """ Meta class for the products """
+        model =     Product
+        fields =    ('name', 'description')
 
 
 class InvoiceModelSerializer(serializers.ModelSerializer):
     """ Bill model serializer """
+
     product = ProductSerializer(many = True)
 
     class Meta:
+        """ Meta class for the products """
+
         model = Bill
         fields = (
             'company_name',
@@ -40,6 +44,7 @@ class InvoiceModelSerializer(serializers.ModelSerializer):
             'code',
             'product',
         )
+
 
 class CreateBillSerializer(BillFieldsRequired, serializers.Serializer):
     """ Create bill serializer """
@@ -84,7 +89,7 @@ class UpdateBillSerializer(BillFieldsRequired, serializers.Serializer):
     """ Update Bill serializer """
 
     def validate(self,data):
-        """ Validate product data has name and description keys and size of dict is same as first one """
+        """ Validate product data has name and description keys """
         try:
             available_words = ['name', 'description']
             for index in data['product_data']:
@@ -97,6 +102,7 @@ class UpdateBillSerializer(BillFieldsRequired, serializers.Serializer):
 
     def update(self,data):
         """ Handle update Bill requests """
+
         bill = self.context['invoice']
         bill.company_name = data['company_name']
         bill.nit = data['nit']
@@ -104,6 +110,7 @@ class UpdateBillSerializer(BillFieldsRequired, serializers.Serializer):
             bill.code = data['code']
         except IntegrityError:
             raise serializers.ValidationError("Code already been used")
+
         names = []
         descriptions = []
         for index in data['product_data']:
@@ -122,6 +129,7 @@ class UpdateBillSerializer(BillFieldsRequired, serializers.Serializer):
     
     def partial_update(self,data):
         """ Handle partial bill update resquests """
+
         bill = self.context['invoice']
 
         try:
@@ -139,6 +147,7 @@ class UpdateBillSerializer(BillFieldsRequired, serializers.Serializer):
                 raise serializers.ValidationError("Code already been used")
         except KeyError:
             pass
+        
         try:
             names = []
             descriptions = []

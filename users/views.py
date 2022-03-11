@@ -26,13 +26,11 @@ class ClientViewSet(viewsets.ModelViewSet):
 
     def get_permissions(self):
         """ Assign permissions based on action. """
-        #Para las acciones ['signup', 'login', 'verify'] se tienen todos los permisos
         if self.action in ['signup', 'login', 'verify']:
             permissions = [AllowAny]
         elif self.action in ['retrieve', 'update', 'partial_update', 'destroy']:
             permissions = [IsAuthenticated]
         else:
-        #Para cualquier otro caso, es autenticado
             permissions = [IsAuthenticated]
         return [p() for p in permissions]
     
@@ -72,7 +70,6 @@ class ClientViewSet(viewsets.ModelViewSet):
         client = self.get_object()
         partial = request.method == 'PATCH' 
         serializer = ClientModelSerializer(
-            #profile,
             client,
             data=request.data,
             partial=partial

@@ -1,4 +1,4 @@
-""" Invicing view """
+""" Invocing view """
 
 
 #Django Rest Framework
@@ -20,16 +20,12 @@ from invoicing.serializers import InvoiceModelSerializer, CreateBillSerializer, 
 class InvoiceViewSet(mixins.ListModelMixin,
                    viewsets.GenericViewSet,
                     mixins.DestroyModelMixin):
-    # mixins.RetrieveModelMixin,
-    #             viewsets.GenericViewSet,
-    #             mixins.UpdateModelMixin):
 
     queryset = Bill.objects.all()
     serializer_class = InvoiceModelSerializer
     lookup_field = "code"
 
     def get_permissions(self):
-        ##Definir que todo se necesite que sea authenticado
         """ Assign permissions based on action. """
         if self.action in ['create_bill', 'list', 'edit']:
             permissions = [IsAuthenticated]
@@ -40,7 +36,7 @@ class InvoiceViewSet(mixins.ListModelMixin,
     @action(detail=False, methods=['post'])
     def create_bill(self, request):
         """ Create bill for a client """
-        #import ipdb;ipdb.set_trace()
+
         serializer = CreateBillSerializer(
             data = request.data,
             context={'token': request.auth.key}
@@ -51,7 +47,8 @@ class InvoiceViewSet(mixins.ListModelMixin,
         return Response(data, status = status.HTTP_201_CREATED)
 
     def get_queryset(self):
-        """ Restrict list to public-only """
+        """ Restrict bills for the actual client only """
+
         queryset = Bill.objects.all()
         if self.action == 'list':
             client_id = Client.objects.get(auth_token=self.request.auth.key)
@@ -63,7 +60,6 @@ class InvoiceViewSet(mixins.ListModelMixin,
         """Update client data."""
         invoice = self.get_object()
         partial = request.method == 'PATCH' 
-        #import ipdb;ipdb.set_trace()
         serializer = UpdateBillSerializer(
             data=request.data,
             partial=partial,
@@ -74,7 +70,6 @@ class InvoiceViewSet(mixins.ListModelMixin,
             serializer.partial_update(request.data)
         else:
             serializer.update(request.data)
-        #serializer.save()
         data = InvoiceModelSerializer(invoice).data
         return Response(data)
 

@@ -20,7 +20,7 @@ from datetime import timedelta
 
 class ClientModelSerializer(serializers.ModelSerializer):
     """ User model serializer """
-    #import ipdb;ipdb.set_trace()
+
     class Meta:
         model = Client
         fields = (
@@ -38,23 +38,23 @@ class ClientSignupSerializer(serializers.Serializer):
     """
 
     #Principal field
-    email = serializers.EmailField(
-        validators = [UniqueValidator(queryset=Client.objects.all())]
-    )
-    username = serializers.CharField(min_length =4,
+    email =                 serializers.EmailField(validators = [UniqueValidator(queryset=Client.objects.all())])
+    username =              serializers.CharField(   min_length =4,
                                         max_length=20,
-                                            validators = [UniqueValidator(queryset = Client.objects.all())]
+                                        validators = [
+                                            UniqueValidator(queryset = Client.objects.all())
+                                        ]
     )
 
     #Name
-    first_name = serializers.CharField(min_length = 4, max_length = 20)
-    last_name = serializers.CharField(min_length = 4, max_length = 20)
+    first_name =            serializers.CharField(min_length = 4, max_length = 20)
+    last_name =             serializers.CharField(min_length = 4, max_length = 20)
 
     #Document
-    document = serializers.IntegerField()
+    document =              serializers.IntegerField()
 
     #Password
-    password = serializers.CharField(min_length = 8, max_length=64)
+    password =              serializers.CharField(min_length = 8, max_length=64)
     password_confirmation = serializers.CharField(min_length = 8, max_length=64)
 
     def validate(self, data):
@@ -101,8 +101,8 @@ class ClientLoginSerializer(serializers.Serializer):
     """ Client login serializer.
     Handle the login request data. """
 
-    email = serializers.EmailField()
-    password = serializers.CharField(min_length = 8, max_length = 64)
+    email =         serializers.EmailField()
+    password =      serializers.CharField(min_length = 8, max_length = 64)
 
     def validate(self, data):
         """ Check credentials. """
