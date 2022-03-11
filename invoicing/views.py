@@ -14,10 +14,11 @@ from invoicing.models import Bill
 from users.models import Client
 
 #Serializers
-from invoicing.serializers import InvoiceModelSerializer, CreateBillSerializer
+from invoicing.serializers import InvoiceModelSerializer, CreateBillSerializer, UpdateBillSerializer
 
 
-class InvoiceViewSet(viewsets.ModelViewSet):
+class InvoiceViewSet(mixins.ListModelMixin,
+                   viewsets.GenericViewSet):
     # mixins.RetrieveModelMixin,
     #             viewsets.GenericViewSet,
     #             mixins.UpdateModelMixin):
@@ -38,15 +39,10 @@ class InvoiceViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def create_bill(self, request):
         """ Create bill for a client """
-        #client = self.get_object()
         #import ipdb;ipdb.set_trace()
-        # serializer = CreateBillSerializer(
-        #     data = request.data,
-        #     context={'request': request.auth.key}
-        # )
-        serializer = InvoiceModelSerializer(
+        serializer = CreateBillSerializer(
             data = request.data,
-            #context={'request': request.auth.key}
+            context={'token': request.auth.key}
         )
         serializer.is_valid(raise_exception=True)
         bill = serializer.save()
@@ -62,17 +58,29 @@ class InvoiceViewSet(viewsets.ModelViewSet):
         return queryset
 
     @action(detail=True, methods=['put', 'patch'])
-    def update_bill(self, request, *args, **kwargs):
+    def edit(self, request, *args, **kwargs):
         """Update client data."""
-        code = self.get_object()
+        invoice = self.get_object()
         partial = request.method == 'PATCH' 
-        serializer = InvoiceModelSerializer(
-            #profile,
-            code,
+        #import ipdb;ipdb.set_trace()
+        serializer = UpdateBillSerializer(
             data=request.data,
-            partial=partial
+            partial=partial,
+            context={'invoice': invoice}
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
-        data = InvoiceModelSerializer(code).data
+        if partial:
+            serializer.partial_update(request.data)
+        else:
+            serializer.update(request.data)
+        #serializer.save()
+        data = InvoiceModelSerializer(invoice).data
         return Response(data)
+
+    def get_serializer_class(self):
+        serializer_class = InvoiceModelSerializer
+        if self.action == 'update':
+            serializer_class = UpdateBillSerializer
+            return serializer_class
+        return serializer_class
+    

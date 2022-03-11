@@ -16,13 +16,7 @@ class BillFieldsRequired(serializers.Serializer):
     company_name = serializers.CharField(min_length =3,max_length=20)
     nit = serializers.IntegerField()
     code = serializers.IntegerField()
-    product_name1 = serializers.CharField(min_length =3,max_length=20)
-    product_description1 = serializers.CharField(min_length =3,max_length=20)
-    product_name2 = serializers.CharField(min_length =3,max_length=20)
-    product_description2 = serializers.CharField(min_length =3,max_length=20)
-    product_name3 = serializers.CharField(min_length =3,max_length=20)
-    product_description3 = serializers.CharField(min_length =3,max_length=20)
-    dicta = serializers.JSONField()
+    product_data = serializers.JSONField()
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -35,15 +29,10 @@ class ProductSerializer(serializers.ModelSerializer):
 class InvoiceModelSerializer(serializers.ModelSerializer):
     """ Bill model serializer """
     product = ProductSerializer(many = True)
-    # company_name = serializers.CharField(min_length =3,max_length=20)
-    # code = serializers.IntegerField()
-
 
     class Meta:
         model = Bill
-        #fields = '__all__'
         fields = (
-            #'client_id',
             'company_name',
             'nit',
             'code',
@@ -53,22 +42,106 @@ class InvoiceModelSerializer(serializers.ModelSerializer):
 class CreateBillSerializer(BillFieldsRequired, serializers.Serializer):
     """ Create bill serializer """
 
+    def validate(self,data):
+        """ Validate product data has name and description keys """
+        available_words = ['name', 'description']
+        for index in data['product_data']:
+            for key in index.keys():
+                if not key in available_words:
+                    raise serializers.ValidationError("Expecting name and description in the product data")
+        return data
+
+
     def create(self,data):
         """ Handle Bill creation """
-        client = Client.objects.get(auth_token=self.context['request'])
+        client = Client.objects.get(auth_token=self.context['token'])
         new_bill = client.bill_set.create(
                             company_name = data['company_name'], 
                             nit = data['nit'],
                             code = data['code'],
                             )
-        product1 = Product.objects.create(name = data['product_name1'], description = data['product_description1'])
-        product2 = Product.objects.create(name = data['product_name2'], description = data['product_description2'])
-        product3 = Product.objects.create(name = data['product_name3'], description = data['product_description3'])
-        new_bill.product.add(product1, product2, product3)
+        names = []
+        descriptions = []
+        for index in data['product_data']:
+            for index2, value in enumerate(index.values()):
+                if index2%2==0:
+                    names.append(value)
+                else:
+                    descriptions.append(value)
+
+        for name, description in zip(names,descriptions):
+            new_product = Product.objects.create(name = name, description = description)
+            new_bill.product.add(new_product)
         return new_bill
     
 class UpdateBillSerializer(BillFieldsRequired, serializers.Serializer):
+    """ Update Bill serializer """
+
+    def validate(self,data):
+        """ Validate product data has name and description keys and size of dict is same as first one """
+        try:
+            available_words = ['name', 'description']
+            for index in data['product_data']:
+                for key in index.keys():
+                    if not key in available_words:
+                        raise serializers.ValidationError("Expecting name and description in the product data")
+            return data
+        except KeyError:
+            return data
 
     def update(self,data):
         """ Handle update Bill requests """
-        pass
+        bill = self.context['invoice']
+        bill.company_name = data['company_name']
+        bill.nit = data['nit']
+        bill.code = data['code']
+        names = []
+        descriptions = []
+        for index in data['product_data']:
+            for index2, value in enumerate(index.values()):
+                if index2%2==0:
+                    names.append(value)
+                else:
+                    descriptions.append(value)
+
+        for name, description, product in zip(names,descriptions, bill.product.all()):
+            product.name = name
+            product.description = description
+            product.save()
+        bill.save()
+        return bill
+    
+    def partial_update(self,data):
+        """ Handle partial bill update resquests """
+        bill = self.context['invoice']
+
+        try:
+            bill.company_name = data['company_name']
+        except KeyError:
+            pass
+        try:
+            bill.nit = data['nit']
+        except KeyError:
+            pass
+        try:
+            bill.code = data['code']
+        except KeyError:
+            pass
+        try:
+            names = []
+            descriptions = []
+            for index in data['product_data']:
+                for index2, value in enumerate(index.values()):
+                    if index2%2==0:
+                        names.append(value)
+                    else:
+                        descriptions.append(value)
+
+            for name, description, product in zip(names,descriptions, bill.product.all()):
+                product.name = name
+                product.description = description
+                product.save()
+        except KeyError:
+            pass
+        bill.save()
+        return bill
